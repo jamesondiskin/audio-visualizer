@@ -23,7 +23,7 @@ Note: This process requires the use of the Pi 5 and an additional PC
 Note: It may be necessary to connect a monitor, keyboard, and mouse to the Pi for the next steps if your network was not configured successfully during the installation.
 
 # Connect to the Pi
-1) Run `hostname -l` on the Raspberry Pi to get the local IP
+1) Run `hostname -I` on the Raspberry Pi to get the local IP
 2) Verify WiFi connection with `sudo nmcli device wifi connect "YOUR SSID" password "YOUR PASSWORD"`
 3) Verify SSH is turned on with `sudo systemctl enable --now ssh`
 4) On a different computer, open PowerShell (Windows), Terminal (macOS), or terminal of choice (Linux) and run `ssh "USER"@"LOCAL IP FOUND IN STEP 1"`. Example: `ssh username@192.168.x.xx` on a home network.
@@ -37,9 +37,14 @@ Once connection has been established, it is time to set up the IDE. For the deve
 Note: You may want to authenticate with SSH keys, but I chose to just use my password as needed.
 
 # Update Pi via Terminal
-1) Run `sudo apt update`
-2) Run `sudo apt full-upgrade -y`
+Run `sudo apt update && sudo apt full-upgrade -y`
 
 # Install dependencies
-1) Run `sudo apt install -y git`
-2) Run `sudo apt install -y build-essential`
+Eventually I probably make a bash script to handle system and dependency updates/installations, but for now here they are:
+1) Run `sudo apt install -y python3-dev python3-pip cython3 python3-numpy libopenblas-dev portaudio19-dev python-dev-is-python3 build-essential git`
+2) Run `sudo pip3 install --break-system-packages sounddevice`
+3) Run `cd~/audio-vis` to move to into the directory created earlier
+4) Run `git clone https://github.com/hzeller/rpi-rgb-led-matrix.git` (the library used to run the matrix)
+5) Run `cd rpi-rgb-led-matrix` to move into the downloaded library directory
+6) Run `sudo pip3 install --break-system-packages .`
+7) Run `arecord -l` to verify if your audio interface is detected by the Raspberry Pi. `arecord` is included in Raspberry Pi OS and does not need to be installed.
