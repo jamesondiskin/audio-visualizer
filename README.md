@@ -35,3 +35,11 @@ Once connection has been established, it is time to set up the IDE. For the deve
 3) In the directory, create a new folder called `audio-vis` to act as the project root.
 
 Note: You may want to authenticate with SSH keys, but I chose to just use my password as needed.
+
+# Update Pi via Terminal
+1) Run `sudo apt update`
+2) Run `sudo apt full-upgrade -y`
+
+# Install dependencies
+1) Run `sudo apt install -y git`
+2) Run `sudo apt install -y build-essential`
