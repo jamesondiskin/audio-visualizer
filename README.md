@@ -48,3 +48,9 @@ Eventually I probably make a bash script to handle system and dependency updates
 5) Run `cd rpi-rgb-led-matrix` to move into the downloaded library directory
 6) Run `sudo pip3 install --break-system-packages .`
 7) Run `arecord -l` to verify if your audio interface is detected by the Raspberry Pi. `arecord` is included in Raspberry Pi OS and does not need to be installed.
+
+# Installing the Visualizer Script
+1) Create a new directory called "scripts"
+2) Run `~cd/"HOSTNAME"/scripts/` Ex: `~cd/audio-vis/scripts/`
+3) Run `wget https://github.com/jamesondiskin/audio-visualizer/blob/main/Code/audvis.py`
+4) Run the script with `python3 audvis.py`
