@@ -4,7 +4,7 @@
 
 This project is built on the Raspberry Pi 5, developed using an 8GB board, although suitable across all models. Running the program headless uses only ~200MB of RAM while running all the libraries.
 
-Hardware Used:
+# Hardware Used:
 - [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
 - [Adafruit RGB LED Matrix](https://www.adafruit.com/product/2279) and the included cables
 - [Adafruit RGB Matrix Hat](https://www.adafruit.com/product/2345)
@@ -40,7 +40,7 @@ Note: You may want to authenticate with SSH keys, but I chose to just use my pas
 Run `sudo apt update && sudo apt full-upgrade -y`
 
 # Install dependencies
-Eventually I probably make a bash script to handle system and dependency updates/installations, but for now here they are:
+Eventually I will probably make a bash script to handle system and dependency updates/installations, but for now here they are:
 1) Run `sudo apt install -y python3-dev python3-pip cython3 python3-numpy libopenblas-dev portaudio19-dev python-dev-is-python3 build-essential git`
 2) Run `sudo pip3 install --break-system-packages sounddevice`
 3) Run `cd~/audio-vis` to move to into the directory created earlier
