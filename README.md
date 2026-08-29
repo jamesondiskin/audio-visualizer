@@ -9,7 +9,7 @@ This project is built on the Raspberry Pi 5, developed using an 8GB board, altho
 - [Adafruit RGB LED Matrix](https://www.adafruit.com/product/2279) and the included cables
 - [Adafruit RGB Matrix Hat](https://www.adafruit.com/product/2345)
 - A USB Audio Interface (any Linux compatible USB interface should work, but I used a [PreSonus AudioBox iTwo](https://www.sweetwater.com/insync/presonus-audiobox-ione-and-audiobox-itwo/) because I found an open-box unit for very cheap.
-- Power supply for the Raspberry Pi and the Matrix HAT (the official 27W Pi 5 charger was used, plus a 5V power supply to independently power the matrix)
+- Power supply for the Raspberry Pi and the Matrix HAT (the official 27W Pi 5 charger was used, plus a 5V power supply to independently power the matrix). The linked matrix is rated for 5V 4A per panel.
 - Requisite cables for your audio setup
 
 # Pi 5 Setup
@@ -54,3 +54,14 @@ Eventually I will probably make a bash script to handle system and dependency up
 2) Run `~cd/"HOSTNAME"/scripts/` Ex: `~cd/audio-vis/scripts/`
 3) Run `wget https://github.com/jamesondiskin/audio-visualizer/blob/main/Code/audvis.py`
 4) Run the script with `python3 audvis.py`
+
+# Physical Matrix Setup
+
+<img width="1324" height="1080" alt="RGB LED Matrix Assembly" src="https://github.com/user-attachments/assets/4d03c008-35dd-446a-99fb-a1e22da8f17a" />
+
+Note: This is a placeholder diagram and may be replaced eventually.
+1) Place the HAT atop the Pi 5 by aligning the GPIO pins.
+2) Remember, we are using two different power supplies as the Pi cannot supply enough power to both the RBG matrix and the audio interface. As a result, connect your Pi power supply (pictured, official Pi 5 27W power supply) to the USB-C power supply port on the Pi 5. Connect your 5V DC power adapter to the hat. __Do not connect these to wall power yet, or do this step last__.
+3) Connect the 8x2 IDC cable to the HUB75 port on the HAT and the corresponding connector on the matrix. Either one will work, as one can be used for daisy chaining multiple matrices together.
+4) Connect the power cable to the POWER pins on the matrix (also labelled with VCC/GND on the silkscreen) and connect the other end to the screw terminals on the HAT.
+5) Connect both power supplies to an AC outlet.
