@@ -1,3 +1,5 @@
+# Depending on the power supply, some of these tests may fail. Pending further investigation.
+
 import sys, time, signal, select, termios, tty
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
