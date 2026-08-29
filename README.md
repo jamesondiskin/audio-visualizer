@@ -64,4 +64,5 @@ Note: This is a placeholder diagram and may be replaced eventually.
 2) Remember, we are using two different power supplies as the Pi cannot supply enough power to both the RBG matrix and the audio interface. As a result, connect your Pi power supply (pictured, official Pi 5 27W power supply) to the USB-C power supply port on the Pi 5. Connect your 5V DC power adapter to the hat. __Do not connect these to wall power yet, or do this step last__.
 3) Connect the 8x2 IDC cable to the HUB75 port on the HAT and the corresponding connector on the matrix. Either one will work, as one can be used for daisy chaining multiple matrices together.
 4) Connect the power cable to the POWER pins on the matrix (also labelled with VCC/GND on the silkscreen) and connect the other end to the screw terminals on the HAT.
-5) Connect both power supplies to an AC outlet.
+5) Connect your audio interface via USB.
+6) Connect both power supplies to an AC outlet.
