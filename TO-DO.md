@@ -1,11 +1,8 @@
 Further plans for the project as well as stuff that needs to be added to the repository
 
 # Repository
-- Dependency install instructions
 - Auto-run/system service setup instructions
-- Wiring diagram for the Pi 5 and Matrix
 - Wiring diagram for how it integrates into my AV setup
-- Release code
 
 # Project
 - Add more color presets
