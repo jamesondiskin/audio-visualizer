@@ -39,6 +39,12 @@ Note: You may want to authenticate with SSH keys, but I chose to just use my pas
 # Update Pi via Terminal
 Run `sudo apt update && sudo apt full-upgrade -y`
 
+# Set Static IP address on Raspberry Pi
+1) In the terminal, run `nmcli connection show`
+2) Set IPv4 to manual with `sudo nmcli connection modify [UUID] ipv4.method manual ipv4.addresses 192.168.X.XXX/XX ipv4.gateway 192.168.X.XXX` changing the Xs for the desired IP address
+3) Configure DNS with `sudo nmcli connection modify [UUID] ipv4.dns "8.8.8.8 1.1.1.1"`
+4) Apply changes with `sudo nmcli connection up [UUID]`
+
 # Install dependencies
 Eventually I will probably make a bash script to handle system and dependency updates/installations, but for now here they are:
 1) Run `sudo apt install -y python3-dev python3-pip cython3 python3-numpy libopenblas-dev portaudio19-dev python-dev-is-python3 build-essential git`
