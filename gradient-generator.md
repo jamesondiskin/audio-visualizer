@@ -5,4 +5,5 @@ This is a Python script meant to run on a separate computer (from the Raspberry 
 # Requirements
 1) Install the latest version of Python
 2) Create a new VS Code folder to house the code and run `pip install pillow paramiko`
-
+3) Add `gradient_generator.py` to the folder.
+4) Run the program (press F5)
