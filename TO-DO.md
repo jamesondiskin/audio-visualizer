@@ -2,7 +2,6 @@ Further plans for the project as well as stuff that needs to be added to the rep
 
 # Repository
 - Auto-run/system service setup instructions
-- Add instructions for static IP address creation
 - Wiring diagram for how it integrates into my AV setup
 
 # Project
