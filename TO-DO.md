@@ -6,7 +6,7 @@ Further plans for the project as well as stuff that needs to be added to the rep
 - Wiring diagram for how it integrates into my AV setup
 
 # Project
-- Create software that can run on a PC to drag-and-drop in an album cover and automatically create gradients that can then be sent to the Pi to display those.
+- FIX THE TEXT DISPLAY FONT LOADING
 - Add rotary encoder that can be used to change colors from gradient presents to match currently playing album.
 - Add rotary encoder for brightness and noise floor sensitivity (POTENTIALLY changing the number of bands displayed instead of sensitivity, not sure yet)
 - Create 3D printable enclosure so there aren't (too many) loose wires in my entertainment center
