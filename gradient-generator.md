@@ -7,3 +7,7 @@ This is a Python script meant to run on a separate computer (from the Raspberry 
 2) Create a new VS Code folder to house the code and run `pip install pillow paramiko`
 3) Add `gradient_generator.py` to the folder.
 4) Run the program (press F5)
+5) Select "Pi Settings"
+6) Enter the Pi hostname or IP address (note: you can easily retrieve the hostname by typing `hostname` in the terminal of your Pi SSH window)
+7) Enter the SSH username (note: you can easily retrieve the username by typing `whoami` in the terminal of your Pi SSH window)
+8) Save the settings
