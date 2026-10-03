@@ -1,5 +1,5 @@
 """ Make the gradients on the Pi directly, seperate from the cover-to-gradient converter that runs on a seperate PC and gets sent over.
-In order to use this properly on the matrix, run `sudo systemctl stop audiovis.service`. When done, you can re-enable it with `sudo systemctl start audiovis.service`
+In order to use this properly on the matrix, run `sudo systemctl stop audvis.service`. When done, you can re-enable it with `sudo systemctl start audvis.service`
 Otherwise, it can be viewed from the terminal at any time, although the colors may not match the matrix with complete accuracy """
 
 import os
@@ -15,6 +15,8 @@ def fileCheck():
 
 def terminalPreview(colors, width=40):
     # Show gradient with 24-bit terminal color codes
+    if width <= 1:
+        width = 2
     line = ""
     for i in range(width):
         t = i / (width - 1)
@@ -22,7 +24,7 @@ def terminalPreview(colors, width=40):
         line += f"\033[48;2;{r};{g};{b}m \033[0m"
     print(line)
 
-def matrixPreview(colors, seconds=5):
+def matrixPreview(colors, seconds=15):
     # Display bottom-to-top, fully cover the matrix
     try:
         from rgbmatrix import RGBMatrix, RGBMatrixOptions
@@ -36,11 +38,11 @@ def matrixPreview(colors, seconds=5):
     options = RGBMatrixOptions()
     options.rows = numRows
     options.cols = numCols
-    options.hardware_mapping = "adafruit_hat"
+    options.hardware_mapping = "adafruit-hat"
     options.chain_length = 1
     options.parallel = 1
     options.brightness = 100 #audvis.py has this set to 70, maybe change later
-    options.gpio_slowdown = 5 #audvis.py has this set to 7, maybe change later
+    options.gpio_slowdown = 7
     options.drop_privileges = False
 
     try:
@@ -53,8 +55,8 @@ def matrixPreview(colors, seconds=5):
     canvas = matrix.CreateFrameCanvas()
     canvas.Clear()
     for y in range (numRows):
-        botRow = numRows = 1 - y
-        t = botRow / numRows
+        botRow = numRows - 1 - y
+        t = botRow / (numRows - 1)
         r, g, b = sampleGradients(colors, t)
         for x in range(numCols):
             canvas.SetPixel(x, y, r, g, b)
@@ -101,6 +103,8 @@ def main():
     gradients = parseGradients(gradientFile)
 
     while True:
+        print("Gradient Editor")
+        print("Note: When searching/previewing the gradients, make sure you input the INDEX of the gradient and not the name (you should only ever input a number)")
         listGradient(gradients)
         print("\n Controls")
         print("n - New Gradient")
@@ -119,7 +123,7 @@ def main():
                 print(f"Saved '{new_gradient['name']}'.")
 
         # PREVIEW VIA TERMINAl
-        if choice == "p":
+        elif choice == "p":
             if not gradients:
                 print("No gradients yet.")
                 continue
@@ -129,18 +133,18 @@ def main():
             else:
                 print("Invalid index")
         # PREVIEW VIA MATRIX
-        if choice == "m":
+        elif choice == "m":
             if not gradients:
                 print("No gradients yet.")
                 continue
-        idx = input("Index to preview on matrix: ").strip()
-        if idx.isdigit() and int(idx) < len(gradients):
-            matrixPreview(gradients[int(idx)]["colors"])
-        else:
-            print("Invalid index")
+            idx = input("Index to preview on matrix: ").strip()
+            if idx.isdigit() and int(idx) < len(gradients):
+                matrixPreview(gradients[int(idx)]["colors"])
+            else:
+                print("Invalid index")
     
         # DELETE
-        if choice == "d":
+        elif choice == "d":
             if not gradients:
                 print("No gradients yet.")
                 continue
@@ -153,7 +157,7 @@ def main():
                 print("Invalid index")
 
         # SAVE AND QUIT
-        if choice == "q":
+        elif choice == "q":
             saveGradients(gradientFile, gradients)
             break
 
