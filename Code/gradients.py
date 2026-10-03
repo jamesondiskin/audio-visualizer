@@ -16,7 +16,7 @@ def hex2rgb(hex_str):
 
 def rgb2hex(rgb):
     # Unpack rgb value into lowercase 2 character wide hex then group as string
-    return "${:02x}{:02x}{:02x}".format(*rgb)
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
 
 # Gradient analysis, parse from gradients.txt
 def parseGradients(path):
