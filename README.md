@@ -72,3 +72,9 @@ Note: This is a placeholder diagram and may be replaced eventually.
 4) Connect the power cable to the POWER pins on the matrix (also labelled with VCC/GND on the silkscreen) and connect the other end to the screw terminals on the HAT.
 5) Connect your audio interface via USB.
 6) Connect both power supplies to an AC outlet.
+
+# Code Explained
+1) `matrix_test.py` Self, explanatory. This tests various modes of the LED matrix to make sure it works during assembly. Side note: on the development side, I've created a few new diagnostic and testing scripts and this has been grouped with those. More to share soon!
+2) `audvis.py` The big one! This is the main file that is meant to run as a service and in the background. It does all the audio processing and visualization. Not exactly sure why, but it tends to break for me when run with `sudo`. Displays audio input from a USB audio interface on a matrix for real time visualization.
+3) `gradients.py` This is a library-esque python file that houses some multipurpose functions and other definitions for use in other files pertaining to creating, editing, and maintaining gradients.
+4) `gradient_editor.py` Allows the creation of gradients from hex codes with previews via Terminal or on the Matrix itself
