@@ -2,7 +2,7 @@
 
 <video src="https://github.com/user-attachments/assets/14c61fe0-b0ee-4298-b2c4-de7c07e8da9a" width="100%" height="100%" controls></video>
 
-This project is built on the Raspberry Pi 5, developed using an 8GB board, although suitable across all models. Running the program headless uses only ~200MB of RAM while running all the libraries.
+This project is built on the Raspberry Pi 5, developed using an 8GB board, although theoretically suitable across all models (testing pending).
 
 # Hardware Used:
 - [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)
