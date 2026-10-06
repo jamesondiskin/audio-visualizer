@@ -1,3 +1,5 @@
+# TO STARTSTOP THIS SERVICE, run sudo systemctl [stop/start] audiovis.service after initially running python3 audvis.py
+
 import os
 import time
 import struct
@@ -9,6 +11,16 @@ import termios
 import tty
 import math
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
+import numpy as np
+import sounddevice as sd
+from gradients import parseGradients, sampleGradients
+from ripper import Ripper
+from display_text import loadFont, drawUI
+
+# Working on developing a breakout board implementation for physical button control over I2C, for now this flag is used for simulating the controls via keyboard and mouse
+simControls = True
+# Add if statement for moving controls over based on hardware
+# Once the hardware info is filled in and the code is complete, remember to import Controls function from the hardware code
 
 # Matrix Info
 WIDTH = 64
@@ -16,7 +28,7 @@ HEIGHT = 32
 BANDS = 64
 FPS = 60
 COLUMNS_PER_BAND = WIDTH // BANDS
-GPIO_SLOWDOWN = 5
+GPIO_SLOWDOWN = 7
 
 # Audio Config
 AUDIO_DEVICE = "default"
@@ -26,16 +38,28 @@ HIGH_FREQ = 16000.0
 
 # Visualizer settings
 GAIN = 1.65
-NOISE_FLOOR = 0.018
+NOISE_FLOOR = 0.018 # Need to add configurability via encoder
+NOISE_FLOOR_MIN = 0.0
+NOISE_FLOOR_MAX = 0.06
+NOISE_FLOOR_STEP = 0.002
 MAX_BAR_HEIGHT = 29
 ATTACK_SMOOTHING = 0.04
-RELEASE_SMOOTHING = 0.07
+RELEASE_SMOOTHING = 0.07 # Need to play with these timings a bit more to nail them in
 
 # Color and Brightness settings
-TOP_COLOR = (95, 190, 255)
+TOP_COLOR = (95, 190, 255) # Old, but default
 BOTTOM_COLOR = (0, 18, 105)
 DIAGNOSTIC_COLOR = (150, 225, 255)
 BRIGHTNESS = 70
+MIN_BRIGHT = 10
+MAX_BRIGHT = 100
+STEP_BRIGHT = 5
+gradientsFile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gradients.txt")
+
+# Ripper audio capture
+RIPPER_NAME = "AudioBox"
+RIPPER_SR = 44100 # Sample Rate
+RIPPER_BS = 1024 # Block Size
 
 # RGB Matrix Options
 options = RGBMatrixOptions()
@@ -46,6 +70,7 @@ options.parallel = 1
 options.hardware_mapping = "adafruit-hat"
 options.gpio_slowdown = GPIO_SLOWDOWN
 options.brightness = BRIGHTNESS
+options.drop_privileges = False
 
 CAVA_CONFIG_PATH = "/tmp/cava_led_matrix.conf"
 CAVA_OUTPUT_PATH = "/tmp/cava_led_matrix.raw"
@@ -53,7 +78,11 @@ CAVA_OUTPUT_PATH = "/tmp/cava_led_matrix.raw"
 # Device state, running (normal) or diagnostic/frequency testing
 running = True
 diagnostic_mode = False
-
+ripper_mode = False
+deltaBright = 0 # Brightness
+deltaGrad = 0 # Gradient
+gradient_pressed = False
+deltaSens = 0 # Sensitivity
 
 def signal_handler(signum, frame): # Stop running when terminate signal received
     global running
@@ -69,12 +98,28 @@ signal.signal(
     signal_handler
 )
 
-
 # Initialize the matrix
 matrix = RGBMatrix(
     options=options
 )
 canvas = matrix.CreateFrameCanvas()
+
+# Once matrix is initialized, load gradient state and then allow for ripper mode
+# Gradient state loader
+gradients = parseGradients(gradientsFile)
+currentGradientIndex = 0
+currentBrightness = BRIGHTNESS
+
+# Ripper state loader, creates once then loads the audio stream when the mode is entered
+ripper = Ripper(output_format="FLAC")
+ripper_font = loadFont()
+ripper_stream = None
+cava = None
+cava_stream = None
+
+realControl = None
+#if not simControls:
+#    realControl = Controls() PLACEHOLDER, to be implemented once software is feature complete and more fleshed out hardware dev begins
 
 # Just ensure that the values stay within range. If too low, pulled to min or too high, pulled to max. Otherwise just keep the value.
 def clamp(
@@ -203,8 +248,16 @@ def get_blue_shade(y):
     b = (TOP_COLOR[2] + (BOTTOM_COLOR[2] - TOP_COLOR[2]) * position)
     return (int(r), int(g), int(b))
 
-# Precompute blue gradient/32 blue shades
-BLUE_PALETTE = [get_blue_shade(y) for y in range(HEIGHT)]
+# Palette generator based on the same logic the blue shade above but from the gradient list file.
+# y = 0 is the top of the panel so that corresponds to the last color in the gradient (inverted). Flipped for the bottom colors(y = height - 1 corresponds to first in gradient)
+def makePalette(colors):
+    palette = []
+    for y in range(HEIGHT):
+        position =  1.0 - (y / (HEIGHT - 1))
+        palette.append(sampleGradients(colors, position))
+    return palette
+# Set that palette to be active
+activePalette = makePalette(gradients[currentGradientIndex]["colors"])
 
 # Process one audio band
 def process_value(raw_value, previous_value):
@@ -243,33 +296,60 @@ def restore_keyboard():
     if (old_terminal_settings is not None and sys.stdin.isatty()):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_terminal_settings)
 
-
+# Needs to be overhauled when hardware buttons are added
 def check_keyboard():
     global diagnostic_mode
     global running
+    global ripper_mode, deltaBright, deltaGrad, gradient_pressed, deltaSens
     if not sys.stdin.isatty():
         return
-
     readable, _, _ = (select.select([sys.stdin], [], [], 0))
     if not readable:
         return
+    raw_key = sys.stdin.read(1)
 
-    key = (sys.stdin.read(1).lower())
-    if key == "d":
-
+    if raw_key.lower() == "d":
         diagnostic_mode = (not diagnostic_mode)
-        print(
-            "DIAGNOSTIC MODE:",
-            (
-                "ON"
-                if diagnostic_mode
-                else
-                "OFF"
-            )
-        )
-
-    elif key == "q":
+        print("DIAGNOSTIC MODE: ",("ON" if diagnostic_mode else "OFF"))
+    elif raw_key.lower() == "q":
         running = False
+
+    elif not simControls:
+        pass
+
+    # Change brightness
+    elif raw_key.lower() == "b":
+        deltaBright = -1
+    elif raw_key.lower() == "n":
+        deltaBright = 1
+    # Change gradient
+    elif raw_key.lower() == "g":
+        deltaGrad = -1
+    elif raw_key.lower() == "h":
+        deltaGrad = 1
+    elif raw_key.lower() == "k":
+        gradient_pressed = True
+    # Sensitivity
+    elif raw_key.lower() == "y":
+        deltaSens = -1
+    elif raw_key.lower() == "u":
+        deltaSens = 1
+    # Ripper mode
+    elif raw_key.lower() == "r":
+        ripper_mode = (not ripper_mode)
+        print("RIPPER MODE: ", "ON" if ripper_mode else "OFF")
+
+def pollControls():
+    global deltaBright, deltaGrad, deltaSens, gradient_pressed, ripper_mode
+    check_keyboard()
+
+    if not simControls:
+        ctrl = realControl.poll()
+        deltaBright = ctrl["deltaBright"]
+        deltaGrad = ctrl["deltaGrad"]
+        deltaSens = ctrl["deltaSens"]
+        gradient_pressed = ctrl["gradient_pressed"]
+        ripper_mode = ctrl["ripper mode"]
 
 # Draw the visualizer
 def draw_visualization(values, smoothed):
@@ -306,7 +386,7 @@ def draw_visualization(values, smoothed):
             if (diagnostic_mode and band == strongest_band):
                 r, g, b = (DIAGNOSTIC_COLOR)
             else:
-                r, g, b = (BLUE_PALETTE[y])
+                r, g, b = (activePalette[y])
             for x in range(x_start, x_end):
                 canvas.SetPixel(x, y, r, g, b)
 
@@ -314,6 +394,72 @@ def draw_visualization(values, smoothed):
     canvas = (matrix.SwapOnVSync(canvas))
     return (strongest_band, smoothed[strongest_band])
 
+# Ripper GUI frame
+def drawRipFrame():
+    global canvas
+    drawUI(canvas, ripper_font, ripper.status(), ripper.output_format)
+    canvas = matrix.SwapOnVSync(canvas)
+
+# Ripper audio callback
+def ripAudioCall(indata, frames, time_info, status):
+    if status:
+        print(status)
+    ripper.process_block(indata)
+
+# Find the device name for the ripper
+def deviceID(name_hint):
+    for i in range(32):
+        try:
+            info = sd.query_devices(i)
+        except Exception:
+            continue
+        if info.get("max_input_channels", 0) > 0 and name_hint.lower() in info["name"].lower():
+            print(f"[ripper] Using audio device #{i}: {info['name']}")
+            return i
+    raise RuntimeError(f"No input device found")
+
+# Ripper mode
+# The two audio streams (CAVA and the ripper are independent of each other and only one runs at a time)
+# This prevents two parallel processes modifying the same USB audio device
+def enterRip():
+    global cava, cava_stream, ripper_stream
+    # Nuke Cava
+    print("Current mode: RIPPER")
+    stop_cava(cava)
+    # Really try to nuke Cava
+    if cava_stream is not None:
+        try:
+            cava_stream.close()
+        except Exception:
+            pass
+    cava = None
+    cava_stream = None
+    time.sleep(2)
+    # Initialize ripper device
+    device_index = deviceID(RIPPER_NAME)
+    ripper_stream = sd.InputStream(
+        device=device_index,
+        channels=2,
+        samplerate=RIPPER_SR,
+        blocksize=RIPPER_BS,
+        callback=ripAudioCall
+    )
+    ripper_stream.start()
+
+def exitRip():
+    global cava, cava_stream, ripper_stream
+    print("Leaving Ripper Mode")
+    if ripper_stream is not None:
+        ripper_stream.stop()
+        ripper_stream.close()
+        ripper_stream = None
+
+    cava = start_cava()
+    if not wait_for_cava(cava):
+        print("Error: CAVA failed to restart")
+        return
+    cava_stream = open(CAVA_OUTPUT_PATH, "rb", buffering=0)
+    print("Current mode: VISUALIZER")
 
 # Read one CAVA frame
 def read_exact(stream, size):
@@ -363,10 +509,15 @@ def clean_temp_files():
 
 # Main
 def main():
-    global running
+    global running, ripper_mode
+    global deltaBright, deltaGrad, deltaSens
+    global gradient_pressed, currentGradientIndex, currentBrightness, activePalette
+    global NOISE_FLOOR
+    global cava, cava_stream
     cava = None
     cava_stream = None
     last_diag_print = 0.0
+    was_ripper_mode = False
 
     try:
         setup_keyboard()
@@ -386,7 +537,48 @@ def main():
 
         # Time to do the actual loop
         while running:
-            check_keyboard()
+            pollControls()
+            # Switch logic between modes
+            if ripper_mode != was_ripper_mode:
+                if ripper_mode:
+                    enterRip()
+                else:
+                    exitRip()
+                was_ripper_mode = ripper_mode
+
+            if ripper_mode:
+                if gradient_pressed:
+                    ripper.manualStart()
+                    gradient_pressed = False
+                if deltaGrad != 0:
+                    ripper.set_format("WAV" if ripper.output_format == "FLAC" else "FLAC")
+                    deltaGrad = 0
+
+                drawRipFrame()
+                time.sleep(1.0 / FPS)
+                continue
+
+            # Visualizer mode
+            if deltaBright != 0:
+                currentBrightness = int(clamp(currentBrightness + deltaBright * STEP_BRIGHT, MIN_BRIGHT, MAX_BRIGHT,))
+                matrix.brightness = currentBrightness
+                deltaBright = 0
+
+            if deltaGrad != 0:
+                reGradient = parseGradients(gradientsFile)
+                if deltaGrad > 0:
+                    currentGradientIndex = (currentGradientIndex + 1) % len(reGradient)
+                else:
+                    currentGradientIndex = (currentGradientIndex - 1) % len(reGradient)
+                activePalette = makePalette(reGradient[currentGradientIndex]["colors"])
+                print(f"Gradient: {reGradient[currentGradientIndex]['name']}")
+                deltaGrad = 0
+
+            if deltaSens != 0:
+                NOISE_FLOOR = clamp(NOISE_FLOOR + deltaSens + NOISE_FLOOR_STEP, NOISE_FLOOR_MIN, NOISE_FLOOR_MAX,)
+                print(f"Noise floor: {NOISE_FLOOR:.3f}")
+                sensitivty_delta = 0
+            
             # Quadruple check that CAVA is actually running
             if cava.poll() is not None:
                 print("\nERROR: CAVA stopped.")
