@@ -11,7 +11,7 @@ import numpy as np
 import soundfile as sf
 
 noiseFloor = 0.02 # Anything above this value means that recording starts and we no longer have silence
-stopTimer = 15.0 # After 15 seconds of silence, the recording will stop. 
+silence_started_at = 15.0 # After 15 seconds of silence, the recording will stop. 
 sampleRate = 44100 # 44.1KHz, uses the existing audio stream so a new one doesn't have to be opened
 channels = 2 # Stereo
 outputPath = os.path.expanduser("~/audio-vis/rips")
@@ -65,12 +65,12 @@ class Ripper:
         elif self.state == stateRec:
             self._file.write(audio_block_stereo)
             if peak < noiseFloor:
-                if self.stopTimer is None:
-                    self._stopTimer = time.time()
-                elif time.time() - self._stopTimer >= stopTimer:
+                if self.silence_started_at is None:
+                    self.silence_started_at = time.time()
+                elif time.time() - self.silence_started_at >= self.silence_started_at:
                     self._stop_recording()
             else:
-                self._stopTimer = None
+                self.silence_started_at = None
 
     def status(self):
         return self.state
