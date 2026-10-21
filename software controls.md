@@ -5,4 +5,7 @@
 - Raise Gradient: h
 - Lower Noise Floor Sensitivity: y
 - Raise Noise Floor Sensitivity: u
-- Toggle Ripper Mode: R
+
+# Ripper Mode
+- Toggle Ripper mode: r
+- Change between WAV and FLAC: g, h
