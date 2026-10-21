@@ -13,7 +13,7 @@ Click the image below for a demonstration video
 # Security Warning
 The SSH implementation will just accept any SSH key it is given. There is NO IDENTITY VERIFICATION and cryptographic host key verification is completely bypassed. Use at your own risk. In a home network, the possibility of a lateral movement attack is still present in the event any other local device is compromised. I currently have no timeline for a fix as I finalize bug fixes for the audio visualizer itself. Please view `TO-DO.md` for more information. For full transparency, when this is patched, the history of `gradient_generator_v2.py` will be removed not to conceal that the vulnerability existed but to ensure that nobody accidentally downloads an insecure legacy version of the script.
 
-Included functionality:
+# Included functionality:
 
 - Automatic gradient generation based on image upload
 - Ability to edit number of gradient stops
