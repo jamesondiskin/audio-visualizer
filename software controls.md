@@ -2,7 +2,7 @@
 - Lower Brightness: b
 - Raise Brightness: n
 - Previous Gradient: g
-- Raise Gradient: h
+- Next Gradient: h
 - Lower Noise Floor Sensitivity: y
 - Raise Noise Floor Sensitivity: u
 
