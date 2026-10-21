@@ -1,13 +1,14 @@
 Further plans for the project as well as stuff that needs to be added to the repository
 
-# IMMEDAITE FIXES
+# Short Term / Bug Fixes
 - Fix noise floor sensitivity alternating between 0 and 0.6, so that you can change the volume of the channels on the audio interface (for ripper mode) without drastically messing up the visualizer mode
+- Fix noise floor text printing endlessly once initially modified.
 - Fix the ripper node not entering standby mode upon silence
 
 # Repository
 - Auto-run/system service setup instructions
 - Add Gradient Maker v2
-- Set up videos
+- Video demo
 
 # Long Term Project / Stretch Goals
 - Add rotary encoder that can be used to change colors from gradient presents to match currently playing album.
