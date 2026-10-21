@@ -2,6 +2,16 @@
 
 This is a Python script meant to run on a separate computer (from the Raspberry Pi running the rest of this) to generate gradients based on uploaded images. These gradients can then be used by the Raspbery Pi and the LED Matrix.
 
+Click the image below for a demonstration video
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=GE7Re7thSW4">
+    <img width="3440" height="1440" alt="Click me to see demo!" src="https://github.com/user-attachments/assets/55ab552a-ad66-4629-850a-52d1717660dc" />
+  </a>
+</p>
+
+
+
 # Requirements
 1) Install the latest version of Python
 2) Create a new VS Code folder to house the code and run `pip install pillow paramiko`
