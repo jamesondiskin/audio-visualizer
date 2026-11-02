@@ -22,7 +22,6 @@ minGap = 0.02        # closest two stops can get (fraction of the bar)
 exportSamples = 32   # uneven gradients are baked into this many colors (matrix rows)
 wheelSize = 220
 
-# Photoshop-like dark theme
 uiBg = "#383838"
 uiField = "#262626"
 uiButton = "#4d4d4d"
@@ -323,20 +322,39 @@ def pickColor(parent, rgb, title="Pick a Color"):
     parent.wait_window(dlg)
     return dlg.result
 
-def send_gradient_line_to_pi(host, username, password, remote_path, name, hex_colors_str):
-    """Appends one gradient line to the Pi's gradients.txt over SFTP.
-    Never reads or rewrites the rest of the file -- purely additive."""
+# Fix pi transfer
+def makeClient():
+    # Host keys from system known_hosts ssh file, connect once with ssh [user]@[host] to save the Pi
     client = paramiko.SSHClient()
-    # This is probably a mistake but this just accepts an unknown SSH key. No  identity verification so use at your own risk. Should be fine in a home setting though.
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(host, username=username, password=password, timeout=10)
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.RejectPolicy())
+    return client
 
-    sftp = client.open_sftp()
-    line = f"{name}|{hex_colors_str}\n"
-    with sftp.file(remote_path, "a") as f:
-        f.write(line)
-    sftp.close()
-    client.close()
+def describeSendError(exc, host, username):
+    # Turn exception from send into dialog
+    if isinstance(exc, paramiko.BadHostKeyException):
+        return ("Host key changed", f"WARNING: {host} presented a different host key than the one saved in your known hosts file. Nothing has been sent. Please verify your entries or regenerate your keys.")
+    if isinstance(exc, paramiko.AuthenticationException):
+        return("Login failed due to incorrect username and/or password")
+    if isinstance(exc, paramiko.SSHException):
+        if "known_hosts" in str(exc):
+            return ("Unknown host", f"{host} is not in the known_hosts yet. Connect once from the terminal to verify fingerprint. ssh [user]@[host], type yes, and then try again.")
+    return ("SSH error," f"SSH problem talking to the Pi:\n{exc}")
+
+def send_gradient_line_to_pi(host, username, password, remote_path, name, hex_colors_str):
+    # Append gradient line to Pi's gradients.txt
+    client = makeClient()
+    try:
+        client.connect(host, username=username, password=password, timeout=10)
+        sftp = client.open_sftp()
+        try:
+            line = f"{name}|{hex_colors_str}\n"
+            with sftp.file(remote_path, "a") as f:
+                f.write(line)
+        finally:
+            sftp.close()
+    finally:
+        client.close()
 
 class GradientFromArtApp:
     def __init__(self, root):
@@ -711,7 +729,7 @@ class GradientFromArtApp:
         if not name:
             messagebox.showwarning("Name needed", "Give the gradient a name first.")
             return
-
+ 
         config = loadConfig()
         if not config.get("host") or not config.get("username") or not config.get("remote_path"):
             messagebox.showinfo("Setup needed", "Set up your Pi's connection details first.")
@@ -719,19 +737,23 @@ class GradientFromArtApp:
             config = loadConfig()
             if not config.get("host"):
                 return
-
+ 
         password = simpledialog.askstring("Pi Password", f"SSH password for {config['username']}@{config['host']}:", show="*")
         if password is None:
             return
-
+ 
         hex_colors_str = ",".join(rgb2hex(c) for c in exportColors(self.colors, self.positions))
-
+ 
         try:
             send_gradient_line_to_pi(
                 config["host"], config["username"], password, config["remote_path"],
                 name, hex_colors_str,
             )
             messagebox.showinfo("Sent", f"'{name}' added to gradients.txt on the Pi.\n\nIt'll show up next time the visualizer cycles or reloads gradients.")
+        except paramiko.SSHException as e:
+            # Unknown host (RejectPolicy), changed host key, or bad login
+            title, message = describeSendError(e, config["host"], config["username"])
+            messagebox.showerror(title, message)
         except Exception as e:
             messagebox.showerror("Send failed", f"Couldn't reach the Pi:\n\n{e}")
 
