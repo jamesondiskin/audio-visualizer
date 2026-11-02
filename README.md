@@ -58,7 +58,7 @@ Eventually I will probably make a bash script to handle system and dependency up
 # Installing the Visualizer Script
 1) Create a new directory called "scripts"
 2) Run `~cd/"HOSTNAME"/scripts/` Ex: `~cd/audio-vis/scripts/`
-3) Run `wget https://github.com/jamesondiskin/audio-visualizer/blob/main/Code/Audio Visualizer/audvis.py`
+3) Run `wget https://github.com/jamesondiskin/audio-visualizer/blob/main/Code/Audio%20Visualizer/audvis.py`
 4) Run the script with `python3 audvis.py`
 
 # Physical Matrix Setup
